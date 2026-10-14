@@ -2,7 +2,7 @@ name: Check sites
 
 on:
   schedule:
-    - cron: '23 * * * *' # 毎時 23 分(毎時 0 分は GitHub Actions が混み、遅れや取りこぼしが増えるため避ける)
+    - cron: '5 * * * *' # 毎時 5 分(毎時 0 分は GitHub Actions が混み、遅れや取りこぼしが増えるため避ける)
   workflow_dispatch:
     inputs:
       simulate_down:

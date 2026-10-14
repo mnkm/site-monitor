@@ -66,7 +66,7 @@ Actions タブで「Check sites」を手動実行し、`simulate_down` に対象
 │   ├── daily.mjs                # 1 日分の結果の集計、証明書の確認、ワークフローの再有効化
 │   └── lib.mjs                  # 共通の処理
 ├── .github/
-│   ├── workflows/check.yml      # 毎時 23 分に実行
+│   ├── workflows/check.yml      # 毎時 5 分に実行
 │   ├── workflows/daily.yml      # 毎日 JST 2:30 に実行
 │   └── dependabot.yml           # アクションの定期更新
 ├── data/summary.json            # 日ごとの集計(日次のまとめが更新)
