@@ -5,7 +5,25 @@
 ## 現在の状況
 
 <!-- status:start -->
-まだ集計していません(最初の日次のまとめは、監視を始めた翌日の JST 2:30 ごろに作られます)。
+### 2026-10-14 の稼働状況
+
+確認回数 4 / 24(判定不能 0)、証明書の期限まで残り 72 日
+
+| 対象 | 稼働率 | 確認 | 失敗 | 平均応答 | 最大応答 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| ポータル | 100.00% | 4 | 0 | 195 ms | 250 ms |
+| prnb-songlist | 100.00% | 4 | 0 | 219 ms | 263 ms |
+| prnb-stream-calendar | 100.00% | 4 | 0 | 212 ms | 285 ms |
+| prnb-stream-calendar API | 100.00% | 4 | 0 | 530 ms | 814 ms |
+| tanzaku-generator | 100.00% | 4 | 0 | 274 ms | 352 ms |
+| yura-teatime | 100.00% | 4 | 0 | 263 ms | 368 ms |
+| prnb-stream-calendar 予定の同期 | 100.00% | 4 | 0 | 536 ms | 816 ms |
+| prnb-songlist データ(Google Apps Script) | 100.00% | 4 | 0 | 2010 ms | 2504 ms |
+| yura-teatime データ(Google スプレッドシート) | 100.00% | 4 | 0 | 1033 ms | 1897 ms |
+| robots.txt | 100.00% | 4 | 0 | 225 ms | 283 ms |
+| sitemap-tools.xml | 100.00% | 4 | 0 | 229 ms | 261 ms |
+
+月ごとの記録: [reports/](reports/)
 <!-- status:end -->
 
 ## 確認している内容
