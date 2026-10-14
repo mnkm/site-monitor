@@ -1,0 +1,94 @@
+{
+  "control": {
+    "name": "対照(Cloudflare)",
+    "url": "https://www.cloudflare.com/cdn-cgi/trace",
+    "expect": { "contains": ["h=www.cloudflare.com"] }
+  },
+  "targets": [
+    {
+      "id": "portal",
+      "name": "ポータル",
+      "url": "https://mnkm.page/",
+      "severity": "core",
+      "expect": { "contains": ["rel=\"canonical\" href=\"https://mnkm.page/\""] }
+    },
+    {
+      "id": "songlist",
+      "name": "prnb-songlist",
+      "url": "https://mnkm.page/prnb-songlist/",
+      "severity": "core",
+      "expect": { "contains": ["<title>PROJECT NEBULA タレント別楽曲リスト</title>"] }
+    },
+    {
+      "id": "calendar",
+      "name": "prnb-stream-calendar",
+      "url": "https://mnkm.page/prnb-stream-calendar/",
+      "severity": "core",
+      "expect": {
+        "contains": ["rel=\"canonical\" href=\"https://mnkm.page/prnb-stream-calendar/\""],
+        "scriptAsset": true
+      }
+    },
+    {
+      "id": "calendar-api",
+      "name": "prnb-stream-calendar API",
+      "url": "https://mnkm.page/prnb-stream-calendar/api/channels",
+      "severity": "core",
+      "expect": { "json": { "nonEmptyArray": true } }
+    },
+    {
+      "id": "tanzaku",
+      "name": "tanzaku-generator",
+      "url": "https://mnkm.page/tanzaku-generator/",
+      "severity": "core",
+      "expect": { "contains": ["rel=\"canonical\" href=\"https://mnkm.page/tanzaku-generator/\""] }
+    },
+    {
+      "id": "teatime",
+      "name": "yura-teatime",
+      "url": "https://mnkm.page/yura-teatime/",
+      "severity": "core",
+      "expect": { "contains": ["rel=\"canonical\" href=\"https://mnkm.page/yura-teatime/\""] }
+    },
+    {
+      "id": "calendar-sync",
+      "name": "prnb-stream-calendar 予定の同期",
+      "url": "https://mnkm.page/prnb-stream-calendar/api/events?from={from}&to={to}",
+      "window": { "pastDays": 7, "futureDays": 7 },
+      "severity": "secondary",
+      "expect": { "json": { "nonEmptyArray": true } }
+    },
+    {
+      "id": "songlist-data",
+      "name": "prnb-songlist データ(Google Apps Script)",
+      "url": "https://script.google.com/macros/s/AKfycbx61e698leQlyLWXTTND-YgOTfV2lNB1YBKLgtJfBAmUOL2XTq1A3uW2AnSIck0WCm-5Q/exec?talent=nina",
+      "severity": "secondary",
+      "redirect": "follow",
+      "timeoutSec": 60,
+      "expect": { "json": { "path": "rows", "nonEmptyArray": true, "forbidKeys": ["error"] } }
+    },
+    {
+      "id": "teatime-data",
+      "name": "yura-teatime データ(Google スプレッドシート)",
+      "url": "https://docs.google.com/spreadsheets/d/1TKqXbi7JbfVjlm7O1LxXh2Q-AA9V5sJN51b0eK_wCHg/export?format=xlsx",
+      "severity": "secondary",
+      "redirect": "follow",
+      "timeoutSec": 60,
+      "expect": { "startsWith": "PK" }
+    },
+    {
+      "id": "robots",
+      "name": "robots.txt",
+      "url": "https://mnkm.page/robots.txt",
+      "severity": "secondary",
+      "expect": { "contains": ["Sitemap: https://mnkm.page/sitemap-tools.xml"] }
+    },
+    {
+      "id": "sitemap-tools",
+      "name": "sitemap-tools.xml",
+      "url": "https://mnkm.page/sitemap-tools.xml",
+      "severity": "secondary",
+      "expect": { "contains": ["<urlset"], "minCount": { "text": "<loc>", "min": 4 } }
+    }
+  ]
+}
