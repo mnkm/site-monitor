@@ -14,6 +14,12 @@ const prev = prevPath && existsSync(prevPath) ? readJson(prevPath) : null;
 const prevById = new Map((prev?.results ?? []).map((r) => [r.id, r]));
 
 const USER_AGENT = `site-monitor (+https://github.com/${process.env.GITHUB_REPOSITORY ?? 'mnkm/site-monitor'})`;
+// Cloudflare のボット対策を、この監視のアクセスだけ通すための目印(リポジトリの Secret に置き、mnkm.page にだけ送る)
+const MONITOR_TOKEN = process.env.MONITOR_TOKEN || '';
+const headersFor = (url) => ({
+  'User-Agent': USER_AGENT,
+  ...(MONITOR_TOKEN && new URL(url).hostname === 'mnkm.page' ? { 'X-Site-Monitor': MONITOR_TOKEN } : {}),
+});
 const RETRY_WAITS_MS = [10_000, 30_000]; // 失敗したら 10 秒後と 30 秒後にやり直す
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -56,7 +62,7 @@ async function inspect(target, url, res, body) {
     const src = body.match(/<script[^>]+src="([^"]*assets\/[^"]+\.js)"/)?.[1];
     if (!src) return 'スクリプトの読み込みが見つからない';
     const assetUrl = new URL(src, url).href;
-    const asset = await fetch(assetUrl, { redirect: 'manual', headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(30_000) });
+    const asset = await fetch(assetUrl, { redirect: 'manual', headers: headersFor(assetUrl), signal: AbortSignal.timeout(30_000) });
     await asset.arrayBuffer();
     if (asset.status !== 200) return `スクリプト(${new URL(assetUrl).pathname})が ${asset.status}`;
   }
@@ -70,7 +76,7 @@ async function attempt(target, now) {
   try {
     const res = await fetch(url, {
       redirect: target.redirect ?? 'manual',
-      headers: { 'User-Agent': USER_AGENT },
+      headers: headersFor(url),
       signal: AbortSignal.timeout((target.timeoutSec ?? 30) * 1000),
     });
     const body = await res.text();

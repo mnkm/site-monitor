@@ -51,6 +51,7 @@ jobs:
       - name: Check sites
         env:
           SIMULATE_DOWN: ${{ inputs.simulate_down }}
+          MONITOR_TOKEN: ${{ secrets.MONITOR_TOKEN }}
         run: node scripts/check.mjs "$RUNNER_TEMP/result/result.json" "$PREV_RESULT"
 
       - name: Set artifact name
