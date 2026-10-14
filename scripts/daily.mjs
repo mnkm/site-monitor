@@ -26,8 +26,10 @@ const oldest = addDays(today, -(RETENTION_DAYS - 1));
 const lastDay = summary.at(-1)?.day;
 let start = lastDay ? addDays(lastDay, 1) : yesterday;
 if (start < oldest) start = oldest;
-const days = [];
+let days = [];
 for (let d = start; d <= yesterday; d = addDays(d, 1)) days.push(d);
+// 動作確認用: SUMMARY_DAYS=2026-10-14,2026-10-15 のように、集計する日を直接指定する(DRY_RUN と組み合わせて手元で使う)
+if (process.env.SUMMARY_DAYS) days = process.env.SUMMARY_DAYS.split(',');
 
 if (days.length === 0) {
   console.log('まとめる日がない');
@@ -55,7 +57,13 @@ if (days.length === 0) {
   }
   console.log(`実行 ${runs.length} 件から結果 ${records.length} 件を読み込んだ`);
 
+  // まだ一度もまとめていないときは、監視を始める前の日(結果が 1 件も無い日)を記録しない
+  if (summary.length === 0) {
+    while (days.length && !records.some((rec) => jstDay(rec.checkedAt) === days[0])) days.shift();
+  }
+
   const tlsDaysLeft = await certificateDaysLeft(TLS_HOST);
+  const latestDay = days.at(-1);
 
   for (const day of days) {
     const ofDay = records.filter((rec) => jstDay(rec.checkedAt) === day);
@@ -78,17 +86,21 @@ if (days.length === 0) {
       runs: ofDay.length,
       inconclusive: ofDay.length - decided.length,
       // 証明書は今の状態しか確かめられないので、いちばん新しい日にだけ記録する
-      tlsDaysLeft: day === yesterday ? tlsDaysLeft : null,
+      tlsDaysLeft: day === latestDay ? tlsDaysLeft : null,
       targets,
     });
   }
   summary.sort((a, b) => a.day.localeCompare(b.day));
 
+  if (days.length === 0) {
+    console.log('結果のある日がまだ無い');
+  } else {
   mkdirSync(join(ROOT, 'data'), { recursive: true });
   writeFileSync(SUMMARY_PATH, `${JSON.stringify(summary, null, 2)}\n`);
   for (const month of new Set(days.map((d) => d.slice(0, 7)))) writeMonthlyReport(month);
   writeReadme();
   syncTlsIssue(tlsDaysLeft);
+  }
 }
 
 // 毎時の確認のワークフローを有効にし直す(60 日間動きが無いリポジトリで、定期実行が止まらないようにするための保険)
@@ -123,8 +135,12 @@ function syncTlsIssue(daysLeft) {
   }
 }
 
-const fmtPct = (v) => (v === null ? '-' : `${v.toFixed(2)}%`);
-const fmtMs = (v) => (v === null ? '-' : `${v} ms`);
+function fmtPct(v) {
+  return v === null ? '-' : `${v.toFixed(2)}%`;
+}
+function fmtMs(v) {
+  return v === null ? '-' : `${v} ms`;
+}
 
 function totals(entries, id) {
   let checks = 0, failures = 0, weighted = 0, okCount = 0, maxMs = null;
