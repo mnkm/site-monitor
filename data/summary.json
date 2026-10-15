@@ -83,5 +83,90 @@
         "maxMs": 261
       }
     }
+  },
+  {
+    "day": "2026-10-15",
+    "runs": 5,
+    "inconclusive": 0,
+    "tlsDaysLeft": 71,
+    "targets": {
+      "portal": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 301,
+        "maxMs": 435
+      },
+      "songlist": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 392,
+        "maxMs": 642
+      },
+      "calendar": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 350,
+        "maxMs": 739
+      },
+      "calendar-api": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 438,
+        "maxMs": 730
+      },
+      "tanzaku": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 427,
+        "maxMs": 840
+      },
+      "teatime": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 403,
+        "maxMs": 948
+      },
+      "calendar-sync": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 516,
+        "maxMs": 1012
+      },
+      "songlist-data": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 4194,
+        "maxMs": 5622
+      },
+      "teatime-data": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 1028,
+        "maxMs": 1861
+      },
+      "robots": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 385,
+        "maxMs": 1142
+      },
+      "sitemap-tools": {
+        "checks": 5,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 664,
+        "maxMs": 1318
+      }
+    }
   }
 ]

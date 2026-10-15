@@ -5,23 +5,23 @@
 ## 現在の状況
 
 <!-- status:start -->
-### 2026-10-14 の稼働状況
+### 2026-10-15 の稼働状況
 
-確認回数 4 / 24(判定不能 0)、証明書の期限まで残り 72 日
+確認回数 5 / 24(判定不能 0)、証明書の期限まで残り 71 日
 
 | 対象 | 稼働率 | 確認 | 失敗 | 平均応答 | 最大応答 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| ポータル | 100.00% | 4 | 0 | 195 ms | 250 ms |
-| prnb-songlist | 100.00% | 4 | 0 | 219 ms | 263 ms |
-| prnb-stream-calendar | 100.00% | 4 | 0 | 212 ms | 285 ms |
-| prnb-stream-calendar API | 100.00% | 4 | 0 | 530 ms | 814 ms |
-| tanzaku-generator | 100.00% | 4 | 0 | 274 ms | 352 ms |
-| yura-teatime | 100.00% | 4 | 0 | 263 ms | 368 ms |
-| prnb-stream-calendar 予定の同期 | 100.00% | 4 | 0 | 536 ms | 816 ms |
-| prnb-songlist データ(Google Apps Script) | 100.00% | 4 | 0 | 2010 ms | 2504 ms |
-| yura-teatime データ(Google スプレッドシート) | 100.00% | 4 | 0 | 1033 ms | 1897 ms |
-| robots.txt | 100.00% | 4 | 0 | 225 ms | 283 ms |
-| sitemap-tools.xml | 100.00% | 4 | 0 | 229 ms | 261 ms |
+| ポータル | 100.00% | 5 | 0 | 301 ms | 435 ms |
+| prnb-songlist | 100.00% | 5 | 0 | 392 ms | 642 ms |
+| prnb-stream-calendar | 100.00% | 5 | 0 | 350 ms | 739 ms |
+| prnb-stream-calendar API | 100.00% | 5 | 0 | 438 ms | 730 ms |
+| tanzaku-generator | 100.00% | 5 | 0 | 427 ms | 840 ms |
+| yura-teatime | 100.00% | 5 | 0 | 403 ms | 948 ms |
+| prnb-stream-calendar 予定の同期 | 100.00% | 5 | 0 | 516 ms | 1012 ms |
+| prnb-songlist データ(Google Apps Script) | 100.00% | 5 | 0 | 4194 ms | 5622 ms |
+| yura-teatime データ(Google スプレッドシート) | 100.00% | 5 | 0 | 1028 ms | 1861 ms |
+| robots.txt | 100.00% | 5 | 0 | 385 ms | 1142 ms |
+| sitemap-tools.xml | 100.00% | 5 | 0 | 664 ms | 1318 ms |
 
 月ごとの記録: [reports/](reports/)
 <!-- status:end -->
