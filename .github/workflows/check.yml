@@ -39,9 +39,13 @@ jobs:
           package-manager-cache: false
 
       # 連続して失敗した回数を数えるため、前回の結果を取ってくる(無ければ最初の 1 回として扱う)
+      # フォークからの Pull Request の実行も同じワークフローの実行として一覧に出るため、
+      # 定期実行と手動実行のうち新しい方の結果だけを使う
       - name: Download previous result
         run: |
-          prev=$(gh run list --workflow check.yml --status completed --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          scheduled=$(gh run list --workflow check.yml --event schedule --status completed --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          manual=$(gh run list --workflow check.yml --event workflow_dispatch --status completed --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          prev=$(printf '%s\n' "$scheduled" "$manual" | sort -n | tail -n 1)
           if [ -n "$prev" ]; then
             gh run download "$prev" --dir "$RUNNER_TEMP/prev" || echo "前回の結果を取得できなかった"
           fi

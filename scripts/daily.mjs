@@ -38,8 +38,14 @@ if (days.length === 0) {
 
   // 対象の日に記録された結果を集める。実行が遅れて日付をまたぐことがあるので、
   // 振り分けは実行の開始時刻ではなく、check.mjs が記録した確認時刻で行う
+  // 集めるのは定期実行と手動実行(workflow_dispatch)の結果だけにする。フォークからの pull request などで
+  // 書き換えられた check.yml が動いた実行の artifact を、本物の確認結果として数えないため
+  // (定期実行は既定のブランチの check.yml でしか動かず、手動実行には書き込み権限が要る)
   const since = new Date(jstDayStart(days[0]).getTime() - 3 * 3600_000);
-  const runs = gh(['run', 'list', '--workflow', 'check.yml', '--limit', '400', '--json', 'databaseId,createdAt'], { json: true })
+  const runs = ['schedule', 'workflow_dispatch']
+    .flatMap((event) =>
+      gh(['run', 'list', '--workflow', 'check.yml', '--event', event, '--limit', '400', '--json', 'databaseId,createdAt'], { json: true })
+    )
     .filter((r) => new Date(r.createdAt) >= since);
   const workDir = mkdtempSync(join(tmpdir(), 'site-monitor-'));
   const records = [];
