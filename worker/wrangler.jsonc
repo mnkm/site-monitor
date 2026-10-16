@@ -1,0 +1,22 @@
+// 毎時の確認を起動する Worker の設定。デプロイ: worker/ で npx wrangler@4.147.0 deploy
+{
+  "name": "site-monitor-trigger",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  // Cron Triggers で動かすだけなので、外から呼べる URL は作らない
+  "workers_dev": false,
+  "preview_urls": false,
+  "triggers": {
+    // 毎時 0 分(UTC)。GitHub の定期実行(毎時 5 分)より先に起動し、そちらは予備として何もせずに終わる
+    "crons": ["0 * * * *"]
+  },
+  "vars": {
+    "REPO": "mnkm/site-monitor",
+    "WORKFLOW": "check.yml",
+    "REF": "main"
+  },
+  // GITHUB_TOKEN は Secret で設定する: npx wrangler@4.147.0 secret put GITHUB_TOKEN
+  "observability": {
+    "enabled": true
+  }
+}

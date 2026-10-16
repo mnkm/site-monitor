@@ -1,6 +1,6 @@
 # site-monitor
 
-`mnkm.page` で公開しているサイトの死活監視です。GitHub Actions で 1 時間ごとに各サイトを確認し、止まっていれば Issue で知らせます。1 日 1 回、稼働状況のまとめをコミットします。
+`mnkm.page` で公開しているサイトの死活監視です。GitHub Actions で 1 時間ごとに(Cloudflare Workers から起動して)各サイトを確認し、止まっていれば Issue で知らせます。1 日 1 回、稼働状況のまとめをコミットします。
 
 ## 現在の状況
 
@@ -65,6 +65,25 @@ GitHub Actions の実行環境(データセンターの IP)からのアクセス
 - 毎時の結果は artifact として 7 日間残します。日次のまとめが飛んだ日は、次の実行で 7 日前までさかのぼって集計します。
 - 「確認回数」が 24 に届かない日があります。GitHub Actions の定期実行は遅れたり飛んだりすることがあり、その分は停止として数えません。
 
+## Cloudflare Workers からの起動
+
+GitHub Actions の定期実行は混むと飛ばされることがあり、毎時の確認が 1 日に数回しか動かない日がありました。そこで、Cloudflare Workers の Cron Triggers([`worker/`](worker/))から、毎時 0 分(UTC)に「Check sites」を手動実行(`workflow_dispatch`)として起動しています。
+
+- GitHub の定期実行(毎時 5 分)は予備として残しています。直近 55 分以内に手動実行が始まっていれば、確認せずに終わります(`gate` ジョブ)。Worker が止まっても、定期実行が動いた分は確認されます。
+- Worker が起動に失敗したときは、Cloudflare のダッシュボード(Workers → `site-monitor-trigger` → ログ)に失敗が残ります。トークンの期限切れや権限不足(401・403)はやり直さず、GitHub 側の一時的な不調(5xx・429)は 3 回までやり直します。
+
+### 設定の手順
+
+1. GitHub で Fine-grained personal access token を作ります。
+   - Repository access: `mnkm/site-monitor` だけ
+   - Permissions: `Actions` を Read and write(ほかは付けない)
+   - 有効期限を付け、期限が近づいたら作り直して手順 3 で設定し直します
+2. `worker/` で Cloudflare にログインします: `npx wrangler@4.147.0 login`
+3. トークンを Secret に設定します: `npx wrangler@4.147.0 secret put GITHUB_TOKEN`
+4. デプロイします: `npx wrangler@4.147.0 deploy`
+
+このトークンでできるのは、このリポジトリのワークフローの起動・取り消しなどだけです(`simulate_down` を指定した起動もできるので、外には出さないでください)。
+
 ## 定期実行が止まらないようにする仕組み
 
 GitHub は、60 日間動きの無い公開リポジトリの定期実行を自動で止めます。このリポジトリでは、日次のまとめのコミットが毎日入るので止まりません。念のため、日次のまとめのたびに、毎時の確認のワークフローを API で有効にし直しています。
@@ -84,11 +103,14 @@ Actions タブで「Check sites」を手動実行し、`simulate_down` に対象
 │   ├── daily.mjs                # 1 日分の結果の集計、証明書の確認、ワークフローの再有効化
 │   └── lib.mjs                  # 共通の処理
 ├── .github/
-│   ├── workflows/check.yml      # 毎時 5 分に実行
+│   ├── workflows/check.yml      # 毎時の確認(Worker から毎時 0 分に起動。定期実行の毎時 5 分は予備)
 │   ├── workflows/daily.yml      # 毎日 JST 2:30 に実行
 │   └── dependabot.yml           # アクションの定期更新
+├── worker/                      # 毎時の確認を起動する Cloudflare Worker(Cron Triggers)
+│   ├── wrangler.jsonc
+│   └── src/index.js
 ├── data/summary.json            # 日ごとの集計(日次のまとめが更新)
 └── reports/YYYY-MM.md           # 月ごとの稼働状況(日次のまとめが更新)
 ```
 
-依存パッケージはありません(Node.js 24 の標準機能だけで動きます)。
+依存パッケージはありません(Node.js 24 の標準機能だけで動きます。Worker のデプロイには `npx` で wrangler を使います)。

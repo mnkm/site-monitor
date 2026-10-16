@@ -2,6 +2,7 @@ name: Check sites
 
 on:
   schedule:
+    # 予備の定期実行。ふだんは Cloudflare Workers(worker/)が毎時 0 分に手動実行として起動し、こちらは gate で何もせずに終わる
     - cron: '5 * * * *' # 毎時 5 分(毎時 0 分は GitHub Actions が混み、遅れや取りこぼしが増えるため避ける)
   workflow_dispatch:
     inputs:
@@ -18,7 +19,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 定期実行のときだけ、直近 55 分以内に手動実行(Cloudflare Workers からの起動を含む)が始まっていれば確認を省く
+  # (同じ時間帯を二重に確認して、日次のまとめの確認回数が 24 を超えないように)
+  gate:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      skip: ${{ steps.recent.outputs.skip }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - id: recent
+        run: |
+          since=$(date -u -d '55 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          count=$(gh run list -R "$GITHUB_REPOSITORY" --workflow check.yml --event workflow_dispatch --limit 5 --json createdAt \
+            --jq "[.[] | select(.createdAt >= \"$since\")] | length")
+          if [ "$count" -gt 0 ]; then
+            echo "直近 55 分以内に手動実行があるので、この回は確認しない"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
   check:
+    needs: gate
+    # 手動実行では gate が動かない(skipped)ので、gate が省くと決めたとき以外は確認する(gate が失敗したときも確認する)
+    if: ${{ !cancelled() && needs.gate.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -40,15 +67,18 @@ jobs:
 
       # 連続して失敗した回数を数えるため、前回の結果を取ってくる(無ければ最初の 1 回として扱う)
       # フォークからの Pull Request の実行も同じワークフローの実行として一覧に出るため、
-      # 定期実行と手動実行のうち新しい方の結果だけを使う
+      # 定期実行と手動実行の結果だけを使う。gate で確認を省いた定期実行には結果が無いので、
+      # 新しい順にたどって、結果のある実行を前回とする
       - name: Download previous result
         run: |
-          scheduled=$(gh run list --workflow check.yml --event schedule --status completed --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-          manual=$(gh run list --workflow check.yml --event workflow_dispatch --status completed --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-          prev=$(printf '%s\n' "$scheduled" "$manual" | sort -n | tail -n 1)
-          if [ -n "$prev" ]; then
-            gh run download "$prev" --dir "$RUNNER_TEMP/prev" || echo "前回の結果を取得できなかった"
-          fi
+          ids=$( {
+            gh run list --workflow check.yml --event schedule --status completed --limit 5 --json databaseId --jq '.[].databaseId'
+            gh run list --workflow check.yml --event workflow_dispatch --status completed --limit 5 --json databaseId --jq '.[].databaseId'
+          } | sort -rn )
+          for id in $ids; do
+            if gh run download "$id" --dir "$RUNNER_TEMP/prev" 2>/dev/null; then break; fi
+          done
+          [ -n "$(ls -A "$RUNNER_TEMP/prev" 2>/dev/null)" ] || echo "前回の結果を取得できなかった"
           file=$(find "$RUNNER_TEMP/prev" -name result.json 2>/dev/null | head -n 1)
           echo "PREV_RESULT=${file}" >> "$GITHUB_ENV"
 
