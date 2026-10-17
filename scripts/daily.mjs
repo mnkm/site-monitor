@@ -76,7 +76,8 @@ if (days.length === 0) {
     const decided = ofDay.filter((rec) => !rec.inconclusive);
     const targets = {};
     for (const t of config.targets) {
-      const results = decided.map((rec) => rec.results.find((x) => x.id === t.id)).filter((x) => x && !x.skipped);
+      // 動作確認(simulate_down)で停止したことにした結果は、稼働率に含めない
+      const results = decided.map((rec) => rec.results.find((x) => x.id === t.id)).filter((x) => x && !x.skipped && !x.simulated);
       const durations = results.filter((x) => x.ok).map((x) => x.durationMs);
       const failures = results.filter((x) => !x.ok).length;
       targets[t.id] = {

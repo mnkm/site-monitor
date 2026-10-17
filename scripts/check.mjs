@@ -103,7 +103,8 @@ async function attempt(target, now) {
 /** 失敗したらやり直したうえで、最終的な結果を返す */
 async function check(target) {
   if (process.env.SIMULATE_DOWN === target.id) {
-    return { ok: false, status: null, durationMs: null, reason: '動作確認のための模擬的な停止', attempts: 1 };
+    // simulated は、日次のまとめで本物の確認として数えないための目印
+    return { ok: false, status: null, durationMs: null, reason: '動作確認のための模擬的な停止', attempts: 1, simulated: true };
   }
   let result;
   for (let i = 0; i <= RETRY_WAITS_MS.length; i++) {
