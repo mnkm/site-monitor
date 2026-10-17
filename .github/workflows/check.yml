@@ -19,8 +19,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # 定期実行のときだけ、直近 55 分以内に手動実行(Cloudflare Workers からの起動を含む)が始まっていれば確認を省く
-  # (同じ時間帯を二重に確認して、日次のまとめの確認回数が 24 を超えないように)
+  # 定期実行のときだけ、この回が受け持つ時間帯(毎時 5 分の予定時刻を含む 1 時間)の始まり以降に
+  # 手動実行(Cloudflare Workers からの起動を含む)が作られていれば確認を省く
+  # (同じ時間帯を二重に確認して、日次のまとめの確認回数が 24 を超えないように。
+  #  Workers の起動が 1 回失敗したときは、その時間帯の定期実行が代わりに確認する)
   gate:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
@@ -34,11 +36,15 @@ jobs:
     steps:
       - id: recent
         run: |
-          since=$(date -u -d '55 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
-          count=$(gh run list -R "$GITHUB_REPOSITORY" --workflow check.yml --event workflow_dispatch --limit 5 --json createdAt \
-            --jq "[.[] | select(.createdAt >= \"$since\")] | length")
+          # 定期実行は遅れることはあっても早まらないので、この実行が作られた時刻の 5 分前が属する時間帯を受け持ちとする
+          # (gate が動き出した時刻は、順番待ちで遅れることがあるので使わない)
+          created=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
+          since=$(date -u -d "@$(( $(date -u -d "$created" +%s) - 300 ))" +%Y-%m-%dT%H:00:00Z)
+          # 同時実行の制限で取り消された手動実行は、確認していないので数えない(待機中・実行中のものは数える)
+          count=$(gh run list -R "$GITHUB_REPOSITORY" --workflow check.yml --event workflow_dispatch --limit 5 --json createdAt,conclusion \
+            --jq "[.[] | select(.createdAt >= \"$since\" and .conclusion != \"cancelled\")] | length")
           if [ "$count" -gt 0 ]; then
-            echo "直近 55 分以内に手動実行があるので、この回は確認しない"
+            echo "この時間帯にはすでに手動実行があるので、この回は確認しない"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
