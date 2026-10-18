@@ -13,7 +13,8 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '
 const SUMMARY_PATH = join(ROOT, 'data', 'summary.json');
 const RETENTION_DAYS = 7; // check.yml の artifact の保存期間
 const EXPECTED_RUNS = 24;
-const TLS_HOST = 'mnkm.page';
+// 証明書の期限を確かめるドメイン(どちらも Cloudflare が証明書を発行・更新する)
+const TLS_HOSTS = ['mnkm.page', 'yurayurausui.fans'];
 const TLS_WARN_DAYS = 10;
 
 const config = readJson(join(ROOT, 'targets.json'));
@@ -68,7 +69,8 @@ if (days.length === 0) {
     while (days.length && !records.some((rec) => jstDay(rec.checkedAt) === days[0])) days.shift();
   }
 
-  const tlsDaysLeft = await certificateDaysLeft(TLS_HOST);
+  const tls = {};
+  for (const host of TLS_HOSTS) tls[host] = await certificateDaysLeft(host);
   const latestDay = days.at(-1);
 
   for (const day of days) {
@@ -92,8 +94,8 @@ if (days.length === 0) {
       day,
       runs: ofDay.length,
       inconclusive: ofDay.length - decided.length,
-      // 証明書は今の状態しか確かめられないので、いちばん新しい日にだけ記録する
-      tlsDaysLeft: day === latestDay ? tlsDaysLeft : null,
+      // 証明書は今の状態しか確かめられないので、いちばん新しい日にだけ記録する(ドメインごとの残り日数)
+      tls: day === latestDay ? tls : null,
       targets,
     });
   }
@@ -106,14 +108,26 @@ if (days.length === 0) {
   writeFileSync(SUMMARY_PATH, `${JSON.stringify(summary, null, 2)}\n`);
   for (const month of new Set(days.map((d) => d.slice(0, 7)))) writeMonthlyReport(month);
   writeReadme();
-  syncTlsIssue(tlsDaysLeft);
+  for (const host of TLS_HOSTS) syncTlsIssue(host, tls[host]);
   }
 }
 
 // 毎時の確認のワークフローを有効にし直す(60 日間動きが無いリポジトリで、定期実行が止まらないようにするための保険)
 gh(['api', '-X', 'PUT', `repos/${repo()}/actions/workflows/check.yml/enable`]);
 
-function certificateDaysLeft(host) {
+/**
+ * 証明書の期限までの残り日数。接続できなかったときは null(サイトの停止は毎時の確認が知らせるので、ここでは警告だけにする)
+ */
+async function certificateDaysLeft(host) {
+  try {
+    return await readCertificate(host);
+  } catch (error) {
+    console.log(`::warning::${host} の証明書を確かめられなかった(${error?.message ?? error})`);
+    return null;
+  }
+}
+
+function readCertificate(host) {
   return new Promise((resolve, reject) => {
     const socket = tls.connect({ host, port: 443, servername: host, timeout: 30_000 }, () => {
       const validTo = new Date(socket.getPeerCertificate().valid_to);
@@ -125,14 +139,18 @@ function certificateDaysLeft(host) {
   });
 }
 
-function syncTlsIssue(daysLeft) {
+/** ドメインごとに、証明書の期限が近い間だけ Issue を開いておく(Issue はタイトルのドメインで見分ける) */
+function syncTlsIssue(host, daysLeft) {
+  if (daysLeft === null) return;
   ensureLabels([['tls', '5319e7', '証明書の期限']]);
-  const open = gh(['issue', 'list', '--state', 'open', '--label', 'tls', '--limit', '10', '--json', 'number'], { json: true })[0]?.number;
+  const open = gh(['issue', 'list', '--state', 'open', '--label', 'tls', '--limit', '50', '--json', 'number,title'], { json: true }).find((i) =>
+    i.title.startsWith(`[証明書] ${host} の`)
+  )?.number;
   if (daysLeft < TLS_WARN_DAYS && !open) {
     gh([
       'issue', 'create',
-      '--title', `[証明書] ${TLS_HOST} の期限まで残り ${daysLeft} 日`,
-      '--body', `${TLS_HOST} の証明書の期限まで、残り ${daysLeft} 日です。Cloudflare は通常、期限の約 30 日前に更新するので、更新がうまくいっていない可能性があります。Cloudflare のダッシュボード(SSL/TLS → Edge Certificates)を確認してください。\n\n残りが ${TLS_WARN_DAYS} 日以上に戻ると、この Issue は自動で閉じます。`,
+      '--title', `[証明書] ${host} の期限まで残り ${daysLeft} 日`,
+      '--body', `${host} の証明書の期限まで、残り ${daysLeft} 日です。Cloudflare は通常、期限の約 30 日前に更新するので、更新がうまくいっていない可能性があります。Cloudflare のダッシュボード(SSL/TLS → Edge Certificates)を確認してください。\n\n残りが ${TLS_WARN_DAYS} 日以上に戻ると、この Issue は自動で閉じます。`,
       '--label', 'tls',
       '--assignee', repo().split('/')[0],
     ]);
@@ -140,6 +158,12 @@ function syncTlsIssue(daysLeft) {
     gh(['issue', 'comment', String(open), '--body', `証明書が更新されました(期限まで残り ${daysLeft} 日)。`]);
     gh(['issue', 'close', String(open)]);
   }
+}
+
+/** その日に記録した証明書の残り日数(ドメインごと)。古い記録は mnkm.page の分だけを tlsDaysLeft に持っている */
+function tlsOf(entry) {
+  if (entry.tls) return entry.tls;
+  return entry.tlsDaysLeft === null || entry.tlsDaysLeft === undefined ? null : { 'mnkm.page': entry.tlsDaysLeft };
 }
 
 function fmtPct(v) {
@@ -195,14 +219,15 @@ function writeMonthlyReport(month) {
     '',
     `「確認回数」は、その日に実行された毎時の確認の回数です(${EXPECTED_RUNS} 回が上限。GitHub Actions の都合で、実行が飛ぶことがあります)。「判定不能」は、監視する側の通信の不調で判定しなかった回数です。`,
     '',
-    '| 日付 | 確認回数 | 判定不能 | 失敗 | 証明書の残り日数 |',
-    '| --- | ---: | ---: | --- | ---: |',
+    `| 日付 | 確認回数 | 判定不能 | 失敗 | ${TLS_HOSTS.map((h) => `証明書の残り日数(${h})`).join(' | ')} |`,
+    `| --- | ---: | ---: | --- | ${TLS_HOSTS.map(() => '---:').join(' | ')} |`,
     ...entries.map((e) => {
       const failed = config.targets
         .filter((t) => e.targets[t.id]?.failures)
         .map((t) => `${t.name} ${e.targets[t.id].failures} 回`)
         .join('、');
-      return `| ${e.day} | ${e.runs} / ${EXPECTED_RUNS} | ${e.inconclusive} | ${failed || 'なし'} | ${e.tlsDaysLeft ?? '-'} |`;
+      const tls = tlsOf(e);
+      return `| ${e.day} | ${e.runs} / ${EXPECTED_RUNS} | ${e.inconclusive} | ${failed || 'なし'} | ${TLS_HOSTS.map((h) => tls?.[h] ?? '-').join(' | ')} |`;
     }),
     '',
   ];
@@ -213,11 +238,14 @@ function writeMonthlyReport(month) {
 function writeReadme() {
   const path = join(ROOT, 'README.md');
   const latest = summary.at(-1);
+  const tls = tlsOf(latest);
+  const known = TLS_HOSTS.filter((h) => tls?.[h] !== null && tls?.[h] !== undefined);
+  const tlsText = known.length ? `、証明書の期限まで残り ${known.map((h) => `${h} ${tls[h]} 日`).join('・')}` : '';
   const section = [
     '<!-- status:start -->',
     `### ${latest.day} の稼働状況`,
     '',
-    `確認回数 ${latest.runs} / ${EXPECTED_RUNS}(判定不能 ${latest.inconclusive})${latest.tlsDaysLeft !== null ? `、証明書の期限まで残り ${latest.tlsDaysLeft} 日` : ''}`,
+    `確認回数 ${latest.runs} / ${EXPECTED_RUNS}(判定不能 ${latest.inconclusive})${tlsText}`,
     '',
     ...targetTable((id) => latest.targets[id] ?? totals([], id)),
     '',
