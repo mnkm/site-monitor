@@ -1,6 +1,6 @@
 # site-monitor
 
-`mnkm.page` で公開しているサイトの死活監視です。GitHub Actions で 1 時間ごとに(Cloudflare Workers から起動して)各サイトを確認し、止まっていれば Issue で知らせます。1 日 1 回、稼働状況のまとめをコミットします。
+`mnkm.page` で公開しているサイトと、碓氷ゆら 非公式ファンサイト(`yurayurausui.fans`)の死活監視です。GitHub Actions で 1 時間ごとに(Cloudflare Workers から起動して)各サイトを確認し、止まっていれば Issue で知らせます。1 日 1 回、稼働状況のまとめをコミットします。
 
 ## 現在の状況
 
@@ -17,6 +17,7 @@
 | prnb-stream-calendar API | 100.00% | 5 | 0 | 436 ms | 701 ms |
 | tanzaku-generator | 100.00% | 5 | 0 | 311 ms | 453 ms |
 | yura-teatime | 100.00% | 5 | 0 | 261 ms | 347 ms |
+| yura-fansite API | `/api/videos` が、動画が 1 件以上入った JSON(`events`)を返すこと(Worker とカレンダーとのつながりが生きているか) | 1 回の失敗で通知 |
 | prnb-stream-calendar 予定の同期 | 100.00% | 5 | 0 | 462 ms | 692 ms |
 | prnb-songlist データ(Google Apps Script) | 100.00% | 5 | 0 | 2908 ms | 3223 ms |
 | yura-teatime データ(Google スプレッドシート) | 100.00% | 5 | 0 | 878 ms | 1149 ms |
@@ -32,7 +33,7 @@
 
 | 対象 | 確認の内容 | 通知 |
 | --- | --- | --- |
-| ポータル、tanzaku-generator、yura-teatime、prnb-stream-calendar | 応答が 200 で、本文に canonical の URL があること | 1 回の失敗で通知 |
+| ポータル、tanzaku-generator、yura-teatime、prnb-stream-calendar、yura-fansite | 応答が 200 で、本文に canonical の URL があること | 1 回の失敗で通知 |
 | prnb-songlist | 応答が 200 で、本文にページのタイトルがあること | 1 回の失敗で通知 |
 | prnb-stream-calendar | 画面が読み込むスクリプト(`assets/index-*.js`)も 200 で返ること | 1 回の失敗で通知 |
 | prnb-stream-calendar API | `/api/channels` が空でない JSON の配列を返すこと | 1 回の失敗で通知 |
@@ -41,17 +42,17 @@
 | yura-teatime のデータ | Google スプレッドシートの書き出しが XLSX(`PK` で始まるファイル)を返すこと(共有が外れるとログイン画面が返る) | 3 回連続の失敗で通知 |
 | robots.txt | `sitemap-tools.xml` への参照があること | 3 回連続の失敗で通知 |
 | sitemap-tools.xml | URL が 4 件以上あること(ビルド時に GitHub API から作るため、空になる故障がありうる) | 3 回連続の失敗で通知 |
-| 証明書(`mnkm.page`) | 期限まで 10 日以上あること(日次のまとめで確認) | 残り 10 日未満で通知 |
+| 証明書(`mnkm.page`・`yurayurausui.fans`) | 期限まで 10 日以上あること(日次のまとめで、ドメインごとに確認) | 残り 10 日未満で、ドメインごとに通知 |
 
 - 失敗したら、10 秒後と 30 秒後にやり直してから判定します。応答が遅いだけでは失敗にしません(応答時間は記録します)。
-- `mnkm.page` のサイトは転送(リダイレクト)をたどらず、200 そのものを求めます(ログイン画面や別のページへの転送を見逃さないため)。Google のサービスは転送をたどります。
+- `mnkm.page` と `yurayurausui.fans` のサイトは転送(リダイレクト)をたどらず、200 そのものを求めます(ログイン画面や別のページへの転送を見逃さないため)。Google のサービスは転送をたどります。
 - 先に対照として `https://www.cloudflare.com/cdn-cgi/trace` を確かめ、それにもアクセスできないときは、GitHub の実行環境の通信の不調とみなしてその回は判定しません(Issue も変えません)。
 
 ## Cloudflare のボット対策との関係
 
 GitHub Actions の実行環境(データセンターの IP)からのアクセスは、Cloudflare のボット対策でチャレンジされることがあります。その場合の失敗は、理由が「Cloudflare のボット対策で止められた」になります。
 
-この監視のアクセスだけを通すため、`mnkm.page` へのリクエストには、リポジトリの Secret `MONITOR_TOKEN` の値を `X-Site-Monitor` ヘッダーで付けます(Google など、ほかのサイトには送りません)。Cloudflare 側で、このヘッダーの値が一致するリクエストのボット対策をスキップするルールを設定します。
+この監視のアクセスだけを通すため、`mnkm.page` と `yurayurausui.fans` へのリクエストには、リポジトリの Secret `MONITOR_TOKEN` の値を `X-Site-Monitor` ヘッダーで付けます(Google など、ほかのサイトには送りません)。Cloudflare 側で、このヘッダーの値が一致するリクエストのボット対策をスキップするルールを設定します(ゾーンごとの設定なので、`yurayurausui.fans` でボット対策を使うときは、そちらにも同じルールを作ります)。
 
 ## 通知
 

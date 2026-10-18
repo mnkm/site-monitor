@@ -51,6 +51,20 @@
       "expect": { "contains": ["rel=\"canonical\" href=\"https://mnkm.page/yura-teatime/\""] }
     },
     {
+      "id": "fansite",
+      "name": "yura-fansite",
+      "url": "https://yurayurausui.fans/",
+      "severity": "core",
+      "expect": { "contains": ["rel=\"canonical\" href=\"https://yurayurausui.fans/\""] }
+    },
+    {
+      "id": "fansite-api",
+      "name": "yura-fansite API",
+      "url": "https://yurayurausui.fans/api/videos?types=live,video&limit=1",
+      "severity": "core",
+      "expect": { "json": { "path": "events", "nonEmptyArray": true } }
+    },
+    {
       "id": "calendar-sync",
       "name": "prnb-stream-calendar 予定の同期",
       "url": "https://mnkm.page/prnb-stream-calendar/api/events?from={from}&to={to}",

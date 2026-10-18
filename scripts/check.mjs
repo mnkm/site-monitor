@@ -14,11 +14,12 @@ const prev = prevPath && existsSync(prevPath) ? readJson(prevPath) : null;
 const prevById = new Map((prev?.results ?? []).map((r) => [r.id, r]));
 
 const USER_AGENT = `site-monitor (+https://github.com/${process.env.GITHUB_REPOSITORY ?? 'mnkm/site-monitor'})`;
-// Cloudflare のボット対策を、この監視のアクセスだけ通すための目印(リポジトリの Secret に置き、mnkm.page にだけ送る)
+// Cloudflare のボット対策を、この監視のアクセスだけ通すための目印(リポジトリの Secret に置き、自分のサイトにだけ送る)
 const MONITOR_TOKEN = process.env.MONITOR_TOKEN || '';
+const OWN_HOSTS = new Set(['mnkm.page', 'yurayurausui.fans']);
 const headersFor = (url) => ({
   'User-Agent': USER_AGENT,
-  ...(MONITOR_TOKEN && new URL(url).hostname === 'mnkm.page' ? { 'X-Site-Monitor': MONITOR_TOKEN } : {}),
+  ...(MONITOR_TOKEN && OWN_HOSTS.has(new URL(url).hostname) ? { 'X-Site-Monitor': MONITOR_TOKEN } : {}),
 });
 const RETRY_WAITS_MS = [10_000, 30_000]; // 失敗したら 10 秒後と 30 秒後にやり直す
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
