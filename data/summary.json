@@ -542,5 +542,107 @@
         "maxMs": 594
       }
     }
+  },
+  {
+    "day": "2026-10-20",
+    "runs": 24,
+    "inconclusive": 0,
+    "tls": {
+      "mnkm.page": 66,
+      "yurayurausui.fans": 87
+    },
+    "targets": {
+      "portal": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 282,
+        "maxMs": 536
+      },
+      "songlist": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 348,
+        "maxMs": 796
+      },
+      "calendar": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 265,
+        "maxMs": 408
+      },
+      "calendar-api": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 429,
+        "maxMs": 575
+      },
+      "tanzaku": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 334,
+        "maxMs": 743
+      },
+      "teatime": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 306,
+        "maxMs": 734
+      },
+      "fansite": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 374,
+        "maxMs": 569
+      },
+      "fansite-api": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 637,
+        "maxMs": 948
+      },
+      "calendar-sync": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 578,
+        "maxMs": 1040
+      },
+      "songlist-data": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 3462,
+        "maxMs": 5705
+      },
+      "teatime-data": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 1084,
+        "maxMs": 1682
+      },
+      "robots": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 391,
+        "maxMs": 578
+      },
+      "sitemap-tools": {
+        "checks": 24,
+        "failures": 0,
+        "availability": 100,
+        "avgMs": 406,
+        "maxMs": 610
+      }
+    }
   }
 ]
