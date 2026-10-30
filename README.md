@@ -5,25 +5,25 @@
 ## 現在の状況
 
 <!-- status:start -->
-### 2026-10-29 の稼働状況
+### 2026-10-30 の稼働状況
 
-確認回数 24 / 24(判定不能 0)、証明書の期限まで残り mnkm.page 57 日・yurayurausui.fans 78 日
+確認回数 24 / 24(判定不能 0)、証明書の期限まで残り mnkm.page 56 日・yurayurausui.fans 77 日
 
 | 対象 | 稼働率 | 確認 | 失敗 | 平均応答 | 最大応答 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| ポータル | 100.00% | 24 | 0 | 297 ms | 732 ms |
-| prnb-songlist | 100.00% | 24 | 0 | 351 ms | 872 ms |
-| prnb-stream-calendar | 100.00% | 24 | 0 | 276 ms | 606 ms |
-| prnb-stream-calendar API | 100.00% | 24 | 0 | 491 ms | 1076 ms |
-| tanzaku-generator | 100.00% | 24 | 0 | 350 ms | 824 ms |
-| yura-teatime | 100.00% | 24 | 0 | 343 ms | 1162 ms |
-| yura-fansite | 100.00% | 24 | 0 | 462 ms | 717 ms |
-| yura-fansite API | 100.00% | 24 | 0 | 765 ms | 1774 ms |
-| prnb-stream-calendar 予定の同期 | 100.00% | 24 | 0 | 637 ms | 942 ms |
-| prnb-songlist データ(Google Apps Script) | 100.00% | 24 | 0 | 3315 ms | 4487 ms |
-| yura-teatime データ(Google スプレッドシート) | 100.00% | 24 | 0 | 1271 ms | 3817 ms |
-| robots.txt | 100.00% | 24 | 0 | 472 ms | 885 ms |
-| sitemap-tools.xml | 100.00% | 24 | 0 | 466 ms | 762 ms |
+| ポータル | 100.00% | 24 | 0 | 253 ms | 489 ms |
+| prnb-songlist | 100.00% | 24 | 0 | 317 ms | 670 ms |
+| prnb-stream-calendar | 100.00% | 24 | 0 | 227 ms | 460 ms |
+| prnb-stream-calendar API | 100.00% | 24 | 0 | 410 ms | 913 ms |
+| tanzaku-generator | 100.00% | 24 | 0 | 323 ms | 787 ms |
+| yura-teatime | 100.00% | 24 | 0 | 298 ms | 514 ms |
+| yura-fansite | 100.00% | 24 | 0 | 417 ms | 721 ms |
+| yura-fansite API | 100.00% | 24 | 0 | 681 ms | 1051 ms |
+| prnb-stream-calendar 予定の同期 | 100.00% | 24 | 0 | 610 ms | 1102 ms |
+| prnb-songlist データ(Google Apps Script) | 100.00% | 24 | 0 | 3251 ms | 4482 ms |
+| yura-teatime データ(Google スプレッドシート) | 100.00% | 24 | 0 | 1572 ms | 9612 ms |
+| robots.txt | 100.00% | 24 | 0 | 428 ms | 680 ms |
+| sitemap-tools.xml | 100.00% | 24 | 0 | 439 ms | 727 ms |
 
 月ごとの記録: [reports/](reports/)
 <!-- status:end -->
